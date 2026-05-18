@@ -54,7 +54,7 @@ pub fn write(alloc: Allocator, out: anytype, deps: StringHashMap(Dependency)) !v
                         \\    name = "{s}";
                         \\    path = fetchgit {{
                         \\      url = "{s}";
-                        \\      ref = "{s}";
+                        \\      tag = "{s}";
                         \\      hash = "{s}";
                         \\    }};
                         \\  }}

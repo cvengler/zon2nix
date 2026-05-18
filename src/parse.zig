@@ -56,6 +56,7 @@ pub fn parse(alloc: Allocator, io: Io, deps: *StringHashMap(Dependency), file: F
         for (deps_init.ast.fields) |dep_idx| {
             var hash: ?[]const u8 = null;
             var url: ?[]const u8 = null;
+            var path: ?[]const u8 = null;
 
             defer {
                 if (url) |u| {
@@ -77,7 +78,22 @@ pub fn parse(alloc: Allocator, io: Io, deps: *StringHashMap(Dependency), file: F
                     url = try parseString(alloc, ast, dep_field_idx);
                 } else if (mem.eql(u8, name, "hash")) {
                     hash = try parseString(alloc, ast, dep_field_idx);
+                } else if (mem.eql(u8, name, "path")) {
+                    path = try parseString(alloc, ast, dep_field_idx);
                 }
+            }
+
+            if (path != null) {
+                var tmp: std.ArrayList(u8) = .empty;
+                defer tmp.deinit(alloc);
+                defer alloc.free(path.?);
+                try tmp.appendSlice(alloc, path.?);
+                try tmp.appendSlice(alloc, "/build.zig.zon");
+
+                var nested_file: File = try std.Io.Dir.cwd().openFile(io, tmp.items, .{});
+                defer nested_file.close(io);
+                try parse(alloc, io, deps, nested_file);
+                continue;
             }
 
             if (url != null and hash != null) {
